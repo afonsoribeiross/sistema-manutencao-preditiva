@@ -12,7 +12,7 @@ def classificar(valor, limite):
         return "Crítico", "🔴"
 
 st.title("Sistema de Manutenção Preditiva")
-st.sidebar.title("Configurações")
+st.sidebar.title("Parâmetros da Máquina")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Limites de operação:**")
