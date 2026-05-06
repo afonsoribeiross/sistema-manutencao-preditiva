@@ -13,14 +13,17 @@ da máquina em Normal, Alerta ou Crítico com base em limites configuráveis.
 - Indicadores visuais estilo painel industrial (gauges)
 - Alerta geral do estado da máquina
 - Limites de operação configuráveis
+- Histórico de leituras
+- Grafico de evolução
+- Alertas por email
 
 ## 🛠️ Tecnologias
 - Python
 - Streamlit
 - Matplotlib
 - NumPy
+- Pandas
+- python-dotenv
 
 ## 🚀 Próximas etapas
-- Histórico de leituras com gráfico de evolução
 - Parâmetros baseados na norma ISO 10816
-- Relatórios automáticos

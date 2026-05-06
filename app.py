@@ -1,7 +1,30 @@
 import streamlit as st
 import matplotlib.pyplot as plt
-# import pandas as pd
+import pandas as pd
 import numpy as np
+from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+def enviar_email(parametros_criticos):
+    remetente = os.getenv("EMAIL_REMETENTE")
+    senha = os.getenv("EMAIL_SENHA")
+    destinatario = os.getenv("EMAIL_DESTINATARIO")
+    
+    mensagem = MIMEText(f"⚠️ Alerta: os seguintes parâmetros estão críticos: {', '.join(parametros_criticos)}")
+    mensagem["Subject"] = "🔴 Alerta de Manutenção Preditiva"
+    mensagem["From"] = remetente
+    mensagem["To"] = destinatario
+    
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as servidor:
+        servidor.login(remetente, senha)
+        servidor.sendmail(remetente, destinatario, mensagem.as_string())
+
+if "historico" not in st.session_state:
+    st.session_state.historico = []
 
 def classificar(valor, limite):
     if valor <= limite * 0.7:
@@ -39,17 +62,50 @@ if st.button("Analisar"):
     status_temp,  icon_temp  = classificar(temperatura, temp_max)
     status_vibr,  icon_vibr  = classificar(vibracao,    vibr_max)
     status_press, icon_press = classificar(pressao,     press_max)
-
+    
+    st.session_state.historico.append({
+    "Temperatura (°C)": temperatura,
+    "Vibração (mm/s)": vibracao,
+    "Pressão (bar)": pressao,
+    "Status Temp": status_temp,
+    "Status Vibr": status_vibr,
+    "Status Press": status_press,
+    "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+    })
     st.markdown("---")
-    st.header("Resultado da Análise")
+    alertas_criticos = []
+    alertas_alerta = []
 
+    if status_temp == "Crítico":
+        alertas_criticos.append("Temperatura")
+    if status_vibr == "Crítico":
+        alertas_criticos.append("Vibração")
+    if status_press == "Crítico":
+        alertas_criticos.append("Pressão")
+
+    if status_temp == "Alerta":
+        alertas_alerta.append("Temperatura")
+    if status_vibr == "Alerta":
+        alertas_alerta.append("Vibração")
+    if status_press == "Alerta":
+        alertas_alerta.append("Pressão")
+
+    if alertas_criticos:
+        st.error(f"⚠️ Estado Crítico: {', '.join(alertas_criticos)}")
+        enviar_email(alertas_criticos)
+    elif alertas_alerta:
+        st.warning(f"⚠️ Estado de Alerta: {', '.join(alertas_alerta)}")
+    else:
+        st.success("✅ Todos os parâmetros normais!")   
+    st.header("Resultado da Análise")    
+    
     r1, r2, r3 = st.columns(3)
 
     with r1:
         st.metric("Temperatura", f"{temperatura}°C")
         st.markdown(f"**Status: {icon_temp} {status_temp}**")
-        fig, ax = plt.subplots(figsize=(4, 2))
 
+        fig, ax = plt.subplots(figsize=(4, 2))
         theta1 = np.linspace(0, 1.047, 100) 
         theta2 = np.linspace( 1.047, 2.094, 100) 
         theta3 = np.linspace(2.094, 3.14 , 100)
@@ -91,7 +147,6 @@ if st.button("Analisar"):
         st.metric("Pressão", f"{pressao} bar")
         st.markdown(f"**Status: {icon_press} {status_press}**")
         fig, ax = plt.subplots(figsize=(4, 2))
-
         beta1 = np.linspace(0, 1.047, 100) 
         beta2 = np.linspace( 1.047, 2.094, 100) 
         beta3 = np.linspace(2.094, 3.14 , 100)
@@ -108,4 +163,17 @@ if st.button("Analisar"):
         st.pyplot(fig)
         plt.close(fig)
 
+    st.markdown("---")
+    st.header("Histórico de Leituras")
+    df = pd.DataFrame(st.session_state.historico)
+    st.dataframe(df)
 
+    fig, ax = plt.subplots(figsize=(4, 2)) 
+    ax.plot(df["Temperatura (°C)"], label="Temperatura")
+    ax.plot(df["Vibração (mm/s)"], label="vibração")
+    ax.plot(df["Pressão (bar)"], label="pressão")  
+    ax.legend()
+    ax.set_title("Evolução de Parâmetros")
+    ax.set_xlabel("Leitura")
+    ax.set_ylabel("Valor")
+    st.pyplot(fig)
