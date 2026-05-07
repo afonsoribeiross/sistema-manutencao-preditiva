@@ -3,26 +3,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from datetime import datetime
-import smtplib
-from email.mime.text import MIMEText
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-def enviar_email(parametros_criticos):
-    remetente = os.getenv("EMAIL_REMETENTE")
-    senha = os.getenv("EMAIL_SENHA")
-    destinatario = os.getenv("EMAIL_DESTINATARIO")
-    
-    mensagem = MIMEText(f"⚠️ Alerta: os seguintes parâmetros estão críticos: {', '.join(parametros_criticos)}")
-    mensagem["Subject"] = "🔴 Alerta de Manutenção Preditiva"
-    mensagem["From"] = remetente
-    mensagem["To"] = destinatario
-    
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as servidor:
-        servidor.login(remetente, senha)
-        servidor.sendmail(remetente, destinatario, mensagem.as_string())
-
+   
+   
 if "historico" not in st.session_state:
     st.session_state.historico = []
 
@@ -92,7 +74,7 @@ if st.button("Analisar"):
 
     if alertas_criticos:
         st.error(f"⚠️ Estado Crítico: {', '.join(alertas_criticos)}")
-        enviar_email(alertas_criticos)
+        
     elif alertas_alerta:
         st.warning(f"⚠️ Estado de Alerta: {', '.join(alertas_alerta)}")
     else:
