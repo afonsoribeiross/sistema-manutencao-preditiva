@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from datetime import datetime
-   
-   
+import requests
+
 if "historico" not in st.session_state:
     st.session_state.historico = []
 
@@ -74,6 +74,7 @@ if st.button("Analisar"):
 
     if alertas_criticos:
         st.error(f"⚠️ Estado Crítico: {', '.join(alertas_criticos)}")
+        requests.post("https://afonsoribeiross.app.n8n.cloud/webhook/32b2dd6b-5678-452e-8006-3612d420d4ee", json={"parametros": alertas_criticos})
         
     elif alertas_alerta:
         st.warning(f"⚠️ Estado de Alerta: {', '.join(alertas_alerta)}")
@@ -144,18 +145,19 @@ if st.button("Analisar"):
 
         st.pyplot(fig)
         plt.close(fig)
+        st.markdown("---")
 
-    st.markdown("---")
+if  st.session_state.historico:
     st.header("Histórico de Leituras")
     df = pd.DataFrame(st.session_state.historico)
     st.dataframe(df)
 
-    fig, ax = plt.subplots(figsize=(4, 2)) 
-    ax.plot(df["Temperatura (°C)"], label="Temperatura")
-    ax.plot(df["Vibração (mm/s)"], label="vibração")
-    ax.plot(df["Pressão (bar)"], label="pressão")  
+    fig, ax = plt.subplots(figsize=(10, 4)) 
+    ax.plot(df["Temperatura (°C)"] / temp_max * 100, label="Temperatura")
+    ax.plot(df["Vibração (mm/s)"] / vibr_max * 100, label="vibração")
+    ax.plot(df["Pressão (bar)"] / press_max * 100, label="pressão")  
     ax.legend()
     ax.set_title("Evolução de Parâmetros")
     ax.set_xlabel("Leitura")
-    ax.set_ylabel("Valor")
+    ax.set_ylabel("% do limite máximo")
     st.pyplot(fig)
