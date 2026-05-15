@@ -162,6 +162,7 @@ if  st.session_state.historico:
     ax.set_xlabel("Leitura")
     ax.set_ylabel("% do limite máximo")
     st.pyplot(fig)
+    plt.close(fig)
 
 if  st.button("Limpar Histórico"):
     st.session_state.historico = []    
