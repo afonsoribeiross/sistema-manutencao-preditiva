@@ -33,7 +33,7 @@ Webhook → n8n Cloud
         ↓
 Alerta automático por email
 ```
-
+![Arquitetura do Sistema](arquitetura.png)
 Os thresholds de classificação são configuráveis e podem ser ajustados conforme requisitos operacionais, histórico da máquina ou normas técnicas aplicáveis ao contexto real de operação.
 
 ## Funcionalidades
