@@ -4,6 +4,27 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import requests
+import sqlite3
+
+def init_db():
+    conn = sqlite3.connect("historico.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS leituras (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            temperatura REAL,
+            vibracao REAL,
+            pressao REAL,
+            status_temp TEXT,
+            status_vibr TEXT,
+            status_press TEXT,
+            data_hora TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
 
 if "historico" not in st.session_state:
     st.session_state.historico = []
@@ -54,6 +75,13 @@ if st.button("Analisar"):
     "Status Press": status_press,
     "Data/Hora": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
     })
+    conn = sqlite3.connect("historico.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO leituras VALUES (NULL, ?, ?, ?, ?, ?, ?, ?)
+    """, (temperatura, vibracao, pressao, status_temp, status_vibr, status_press, datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    conn.commit()
+    conn.close()
     st.markdown("---")
     alertas_criticos = []
     alertas_alerta = []
@@ -147,15 +175,18 @@ if st.button("Analisar"):
         plt.close(fig)
         st.markdown("---")
 
-if  st.session_state.historico:
+conn = sqlite3.connect("historico.db")
+df = pd.read_sql("SELECT * FROM leituras", conn)
+conn.close()
+
+if not df.empty:
     st.header("Histórico de Leituras")
-    df = pd.DataFrame(st.session_state.historico)
     st.dataframe(df)
 
     fig, ax = plt.subplots(figsize=(10, 4)) 
-    ax.plot(df["Temperatura (°C)"] / temp_max * 100, label="Temperatura")
-    ax.plot(df["Vibração (mm/s)"] / vibr_max * 100, label="vibração")
-    ax.plot(df["Pressão (bar)"] / press_max * 100, label="pressão") 
+    ax.plot(df["temperatura"] / temp_max * 100, label="Temperatura")
+    ax.plot(df["vibracao"] / vibr_max * 100, label="Vibração")
+    ax.plot(df["pressao"] / press_max * 100, label="Pressão")
     ax.axhline(y=100, color="red", linestyle="--", linewidth=1.5, label="Limite crítico") 
     ax.legend()
     ax.set_title("Evolução de Parâmetros")
